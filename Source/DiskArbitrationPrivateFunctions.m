@@ -53,10 +53,10 @@ BOOL DADiskValidate(DADiskRef diskRef)
 	
 	// Reject if no BSDName
 	if (DADiskGetBSDName(diskRef) == NULL) 
-		[NSException raise:NSInternalInconsistencyException format:@"Disk without BSDName"];
-//		return NO;
+		return NO;
 	
 	CFDictionaryRef desc = DADiskCopyDescription(diskRef);
+	if (!desc) return NO;
 	//	CFShow(desc);
 	
 	// Reject if no key-value for Whole Media
@@ -78,7 +78,8 @@ void DiskAppearedCallback(DADiskRef diskRef, void *context)
 {
 	if (context != [Disk class]) return;
 	
-	Log(LOG_DEBUG, @"%s <%p> %s", __func__, diskRef, DADiskGetBSDName(diskRef));
+	const char *bsdName = DADiskGetBSDName(diskRef);
+	Log(LOG_DEBUG, @"%s <%p> %s", __func__, diskRef, bsdName ? bsdName : "(null)");
 	
 	if (DADiskValidate(diskRef)) 
 	{
@@ -91,7 +92,8 @@ void DiskDisappearedCallback(DADiskRef diskRef, void *context)
 {
 	if (context != [Disk class]) return;
 	
-	Log(LOG_DEBUG, @"%s <%p> %s", __func__, diskRef, DADiskGetBSDName(diskRef));
+	const char *bsdName = DADiskGetBSDName(diskRef);
+	Log(LOG_DEBUG, @"%s <%p> %s", __func__, diskRef, bsdName ? bsdName : "(null)");
 	
 	Disk *tmpDisk = [Disk uniqueDiskForDADisk:diskRef create:NO];
 	if (!tmpDisk) {
@@ -107,7 +109,8 @@ void DiskDescriptionChangedCallback(DADiskRef diskRef, CFArrayRef keys, void *co
 {
 	if (context != [Disk class]) return;
 	
-	Log(LOG_DEBUG, @"%s <%p> %s, keys changed:", __func__, diskRef, DADiskGetBSDName(diskRef));
+	const char *bsdName = DADiskGetBSDName(diskRef);
+	Log(LOG_DEBUG, @"%s <%p> %s, keys changed:", __func__, diskRef, bsdName ? bsdName : "(null)");
 	Log(LOG_DEBUG, @"%@", keys);
 	
 	for (Disk *disk in uniqueDisks) {

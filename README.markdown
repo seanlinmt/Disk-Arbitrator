@@ -1,75 +1,95 @@
-## Introduction
+# Disk Arbitrator
 
-Disk Arbitrator is a Mac OS X forensic utility designed to help the user ensure correct forensic procedures are followed during imaging of a disk device. 
-Disk Arbitrator is essentially a user interface to the Disk Arbitration framework, which enables a program to participate in the management of block 
-storage devices, including the automatic mounting of file systems.  When enabled, Disk Arbitrator will block the mounting of file systems to avoid mounting as read-write and violating the integrity of the evidence.
+Disk Arbitrator is a macOS forensic utility designed to help users ensure correct forensic procedures are followed during imaging and examination of block storage devices. 
 
-It is important to note that Disk Arbitrator is *not* a software write blocker---it does not change the state of currently attached devices nor does it affect newly attached devices to force a device to be read-only. The user still must be careful to not accidentally write to a disk with a command such as "dd".  Owing to this fact, a hardware or software write-blocker may still be desirable for the most sound procedure.  Disk Arbitrator compliments a write-blocker with additional useful features and eliminates the typical forensic recommendation to "disable disk arbitration."
+Disk Arbitrator acts as an interface to the macOS Disk Arbitration framework, which enables programs to participate in the management of block storage devices—including automatic mounting of file systems. When enabled, Disk Arbitrator intercepts and blocks automatic file system mounts, preventing disks from mounting read-write and preserving evidentiary integrity.
+
+![Disk Arbitrator Main Interface](Documents/DiskArbitratorUI.png)
+
+> **Important Forensic Notice**: Disk Arbitrator is *not* a hardware or kernel-level write-blocker; it does not alter controller firmware or prevent raw sector writes by direct low-level commands (such as `dd`). Forensic examiners must exercise standard precautions. Disk Arbitrator complements physical write-blockers with user-level mount arbitration and eliminates the risky forensic recommendation to disable the system's disk arbitration daemon entirely.
+
+---
+
+## Features & Modern UI
+
+Disk Arbitrator features a native macOS interface tailored for rapid forensic triage and device monitoring:
+
+* **Apple Silicon & Intel Native**: Universal binary built for Apple Silicon (M1/M2/M3/M4, arm64) and Intel (x86_64) architectures.
+* **Mode Control Bar**: High-visibility status banner with instant switching between:
+  * **Block Mounts**: Rejects all automatic system mount attempts; attached disks remain unmounted.
+  * **Read-Only**: Intercepts mount attempts and remounts volumes strictly read-only (with journal replay disabled on supported file systems).
+  * **Deactivated**: Standard macOS mounting behavior is restored.
+* **Real-Time Telemetry Dashboard**:
+  * **Arbitration Status**: Instant visual feedback (`ARMED`, `READ-ONLY`, or `INACTIVE`).
+  * **Write-Shield Ratio**: Live forensic protection gauge (`100%` when protected, `0%` when deactivated).
+  * **Active Block Devices**: Real-time counter tracking total detected block devices and mountable volumes.
+* **Device & Forensics Sidebar**:
+  * **Category Navigation**: Filter devices by **All Storage**, **External Media**, **Disk Images**, or **Rejection Audits** (disks blocked by policy).
+  * **Dynamic Counter Badges**: Live tallies that update instantly as disks connect or disconnect.
+  * **Launch Agent Status**: Integrated card reporting background watchdog health via `launchd`.
+* **Multi-Column Block Device Table**:
+  * Hierarchical display of physical drives, APFS containers, partitions, and volume slices.
+  * Dedicated columns for **Device**, **BSD Name** (`disk0`, `disk3s1`, etc.), **Mount State**, **Filesystem** (APFS, HFS+, exFAT, MS-DOS, NTFS), **Capacity**, and **Protocol** (Internal, USB, Virtual Interface, etc.).
+* **Embedded Disk Inspector**:
+  * Contextual inspector pane showing metadata for selected volumes without opening secondary windows (BSD Name, Mount Path, Media Kind, Protocol, Block Size, Vendor, Model, Removable, and Ejectable status).
+* **Modern SF Symbols Toolbar**:
+  * Quick-access actions for **Info**, **Eject**, **Mount/Unmount**, and **Attach Disk Image**.
+* **Drag-and-Drop Disk Image Staging**:
+  * Drag forensic disk images directly into the device table to attach and inspect them under active policy protection.
+
+---
 
 ## System Requirements
 
-* Intel Mac
-* OS X 10.5 or later
+* **Supported Hardware**: Apple Silicon (M1/M2/M3/M4, arm64) and Intel (x86_64) Macs
+* **Operating System**: macOS 11.5 (Big Sur) or later (fully supported on macOS 12 Monterey, macOS 13 Ventura, macOS 14 Sonoma, and macOS 15 Sequoia)
+* **File Systems**: APFS, HFS+, exFAT, MS-DOS (FAT32/FAT16), NTFS, and raw disk images
+
+---
 
 ## Downloads
 
-You can find links to compiled executables on the [releases](https://github.com/aburgh/Disk-Arbitrator/releases) page.
+Compiled application binaries and release packages can be found on the GitHub [Releases](https://github.com/aburgh/Disk-Arbitrator/releases) page.
+
+---
 
 ## Quick Start
 
 ### Installation
 
-To install, drag the Disk Arbitrator application to the desired location, for example /Applications.
-
-You may optionally want to have Disk Arbitrator automatically running every time you log in. There are two ways to do this:
-
-* Add Disk Arbitrator to your Login Items in the User & Groups (or Accounts on older OS X versions) preference panel in System Preferences.
-
-* Use the included "Install User Launch Agent" feature (accessible from the menu). When installed, the system's launchd will automatically launch Disk Arbitrator when you log in, just like a Login Item. In addition, the plist contains a setting which instructs launchd to monitor the application and automatically relaunch it in the event of a crash or if otherwise quit. This offers the most assurance that Disk Arbitrator will be running whenever you are logged in.
+1. Drag `Disk Arbitrator.app` into `/Applications`.
+2. *(Optional, Recommended)* Configure Disk Arbitrator to run automatically on login:
+   * **Login Items**: Add Disk Arbitrator in macOS **System Settings** > **General** > **Login Items**.
+   * **User Launch Agent**: Use the built-in **Install User Launch Agent** menu item. This installs a `launchd` plist that starts Disk Arbitrator at login and monitors the process to automatically relaunch it if quit or terminated, ensuring uninterrupted forensic protection.
 
 ### Usage
 
-When launched, it adds its icon to the status bar on the right side of the menu bar. The status bar icon indicates one of three states:
+When launched, Disk Arbitrator displays the main forensic dashboard and registers an icon in the macOS menu bar status area. The status icon reflects the active protection state:
 
-* Green: the utility is activated and in Block Mounts mode.
+* **Green**: Utility is activated and in **Block Mounts** mode.
+* **Orange**: Utility is activated and in **Read-Only** mode.
+* **Gray**: Utility is deactivated; disks mount normally under default macOS behavior.
 
-* Orange: the utility is activated and in Read-only mode.
+Disk Arbitrator continuously observes block device attachment notifications via the Disk Arbitration framework:
 
-* Gray: the utility is deactivated and attached disks will be automatically mounted by the system.
+* **Deactivated**: Observes disk arrivals and departures without intervening.
+* **Block Mounts**: Rejects every system mount request. Connected disks and volume partitions remain unmounted block devices.
+* **Read-Only**: Intercepts the system's mount request and immediately mounts the volume with read-only flags enforced. For HFS file systems, it includes the flag to ignore the journal.
 
-Disk Arbitrator continuously monitors for disks to appear and disappear and tracks the disks in the main window. When a new disk is attached, the system notifies Disk Arbitrator and gives it a chance to reject mounting of a disk volume.  Disk Arbitrator responds as such:
-
-* When deactivated, it just observes the disk changes
-
-* When activated and in Block Mounts mode, it simply rejects every new system attempt to mount a volume.
-
-* When activated and in Read-only mode, it rejects the original mount action and automatically sends its own request to mount the volume, but it ensures the mount includes the option to make the file system read-only.  It also checks the file system type and, if it is HFS, it includes the flag to ignore the journal.
-
-**Reminder:** Disk Arbitrator does its work by actively participating in the mounting process. If the utility is deactivated or is quit and not running, there is no protection from auto-mounting attached disks.  However, once a disk appears and the process of either mounting or rejecting the mount is finished, then Disk Arbitrator may be quit without affecting the state of the disk.
+> **Note**: Disk Arbitrator actively participates in the mount negotiation process while running. If the application is quit or deactivated, new disk attachments will be handled by default macOS automount behavior. However, disks mounted or blocked while Disk Arbitrator was active maintain their state after the application is closed.
 
 ### Working With Disk Images
 
-As of version 0.3.0, Disk Arbitrator has support for disk images.  
+Disk Arbitrator includes first-class coordination for disk images (`.dmg`, `.iso`, etc.):
 
-Using Disk Arbitrator's Attach Disk Image feature, attaching the disk image is effectively coordinated.  When "Attach Disk Image..." is selected from the menu, an open panel appears which includes additional options for attaching and mounting the disk image.  The default is to only attach the disk image.  When the "Open" button is clicked, Disk Arbitrator attaches the disk using hdiutil.  Once it is attached, Disk Arbitrator's normal behavior applies, so if it is activated and the mode is set to Read-Only, the volumes on the disk image will be mounted read-only.  If the mode is set to Block Mounts, the volumes will be ignored.
-
-The disk image open panel includes an option to attempt to mount the disk image for when Disk Arbitrator isn't activated and is being used as a convenient means to attach a disk image.  When the mount option is used, Disk Arbitrator passes "-mount optional" to hdiutil, which attempts to attach and mount the disk image, but with the benefit that if the mount fails, the disk image is not detached.
-
-Disk Arbitrator also supports drag and drop to attach a disk image.  Simply drag one or more disk images from a Finder window to Disk Arbitrator's list of disks to initiate attaching the disk images.  When using drag and drop, the default options include "-mount optional", so mounting is also attempted.  If the mount fails, the disk image remains attached and can be mounted manually.
-
-Notes:
-
-* Attempting to attach and mount a disk image outside of Disk Arbitrator, either by double-clicking it in the Finder or using hdiutil attach, will behave as before: the disk image will be attached, then the system will attempt to mount it, Disk Arbitrator will reject the mount, and the disk image will be unattached because the mount failed.
-
-* If a disk image with a Software License Agreement is attached, Disk Arbitrator automatically replies "Yes" to the agreement.  Caveat Emptor.
+* **Attach Disk Image Menu**: Choosing **Attach Disk Image...** (or clicking **Attach** in the toolbar) presents an open dialog with forensic attachment options. Disk Arbitrator attaches the image using `hdiutil` and coordinates with the arbitrator to apply the current protection mode.
+* **Drag and Drop**: Drag one or more disk image files directly into Disk Arbitrator's device table to attach them.
+* **Software License Agreements**: If an attached disk image presents a software license agreement (SLA), Disk Arbitrator automatically accepts it to prevent hanging background operations.
 
 ### A Note On Dirty Journals
 
-When set to Read-only mode, the mount request that Disk Arbitrator sends includes the option to ignore the journal, which is useful when the HFS file system was last detached without unmounting (e.g., the system crashed, or an external drive was unplugged without ejecting it). If you are working with a disk that was not cleanly ejected, then attempts to attach it read-only will normally fail because HFS knows the journal needs to be replayed and it is not allowed to make the changes, so it fails to mount.
+When mounting an HFS+ file system in Read-Only mode, Disk Arbitrator instructs the mount subsystem to ignore the journal (`-j`). If a volume was not cleanly unmounted (e.g., unexpected power loss or disconnect), HFS normally fails read-only mount attempts because journal replay requires write access. Ignoring the journal allows read-only inspection without altering volume contents.
 
-Mounting a disk image with a dirty file system can be achieved by using a shadow file, but this is less than ideal. The shadow file protects the original disk image from changes, but the file system is mounted read-write.  A better option is to execute the two steps manually, using Terminal:
-
+For manual command-line inspection of unclosed disk images:
 1. `hdiutil attach -nomount disk_image.dmg`
-2. `mount_hfs -j -o rdonly /dev/diskx /mount/path`
-
-Disk Arbitrator provides a convenient way to execute the second step, and a future version will perform both steps in one operation.
+2. `mount_hfs -j -o rdonly /dev/diskX /mount/path`

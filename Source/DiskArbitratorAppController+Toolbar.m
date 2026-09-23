@@ -12,6 +12,13 @@
 
 @implementation AppController (AppControllerToolbar)
 
+- (NSImage *)toolbarSymbolNamed:(NSString *)symbolName
+{
+	NSImage *image = [NSImage imageWithSystemSymbolName:symbolName accessibilityDescription:nil];
+	image.template = YES;
+	return image;
+}
+
 - (NSImage *)attachDiskImageIcon
 {
 	NSImage *dmgIcon = [[NSWorkspace sharedWorkspace] iconForFileType:@"dmg"];
@@ -38,7 +45,7 @@
 	if ([itemIdentifier isEqual:ToolbarItemInfoIdentifier]) {				// Info/Inspect
 		item.label = NSLocalizedString(@"Info", nil);
 		item.paletteLabel = NSLocalizedString(@"Info", nil);
-		item.image = [NSImage imageNamed:@"ToolbarItem Info"]; // NSImageNameInfo]];
+		item.image = [self toolbarSymbolNamed:@"info.circle"];
 		item.target = self;
 		item.action = @selector(performGetInfo:);
 		item.toolTip = NSLocalizedString(@"Show detailed disk info", nil);
@@ -46,7 +53,7 @@
 	else if ([itemIdentifier isEqual:ToolbarItemEjectIdentifier]) {		// Eject
 		item.label = NSLocalizedString(@"Eject", nil);
 		item.paletteLabel = NSLocalizedString(@"Eject", nil);
-		item.image = [NSImage imageNamed:@"ToolbarItem Eject"];
+		item.image = [self toolbarSymbolNamed:@"eject"];
 		item.target = self;
 		item.action = @selector(performEject:);
 		item.toolTip = NSLocalizedString(@"Eject removable media.", nil);
@@ -54,7 +61,7 @@
 	else if ([itemIdentifier isEqual:ToolbarItemMountIdentifier]) {			// Mount
 		item.label = NSLocalizedString(@"Mount", nil);
 		item.paletteLabel = NSLocalizedString(@"Mount/Unmount", nil);
-		item.image = [NSImage imageNamed:@"ToolbarItem Mount"];
+		item.image = [self toolbarSymbolNamed:@"externaldrive"];
 		item.target = self;
 		item.action = @selector(performMountOrUnmount:);
 		item.toolTip = NSLocalizedString(@"Select a volume, then click to mount or unmount.", nil);
@@ -62,8 +69,7 @@
 	else if ([itemIdentifier isEqual:ToolbarItemAttachDiskImageIdentifier]) {			// Attach Disk Image
 		item.label = NSLocalizedString(@"Attach", nil);
 		item.paletteLabel = NSLocalizedString(@"Attach Disk Image", nil);
-//		item.image = [NSImage imageNamed:@"ToolbarItem Attach Disk Image"];
-		item.image = self.attachDiskImageIcon;
+		item.image = [self toolbarSymbolNamed:@"doc.zipper"];
 		item.target = self;
 		item.action = @selector(performAttachDiskImage:);
 		item.toolTip = NSLocalizedString(@"Attach Disk Image", nil);

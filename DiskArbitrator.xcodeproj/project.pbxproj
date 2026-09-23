@@ -55,6 +55,7 @@
 		96FCBC871140CBF400E5554C /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96FCBC861140CBF400E5554C /* Security.framework */; };
 		96FCCE46114491E700E5554C /* ToolbarItem Attach Disk Image.png in Resources */ = {isa = PBXBuildFile; fileRef = 96FCCE45114491E700E5554C /* ToolbarItem Attach Disk Image.png */; };
 		A5E4FC5C1CC99D02005B7675 /* ReleaseNotes.markdown in Resources */ = {isa = PBXBuildFile; fileRef = A5E4FC5A1CC99C64005B7675 /* ReleaseNotes.markdown */; };
+		AA0000000000000000000003 /* MainWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000002 /* MainWindowController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -132,6 +133,8 @@
 		E48EB2D523EE60ED00C0B297 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/DiskInfo.xib; sourceTree = "<group>"; };
 		E48EB2D623EE60ED00C0B297 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/AttachDiskImageAccessory.xib; sourceTree = "<group>"; };
 		E48EB2D723EE60ED00C0B297 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Preferences.xib; sourceTree = "<group>"; };
+		AA0000000000000000000001 /* MainWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainWindowController.h; sourceTree = "<group>"; };
+		AA0000000000000000000002 /* MainWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MainWindowController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,6 +174,8 @@
 				9626E83111314E7600B803AB /* AttachDiskImageController.m */,
 				9626E5071124C63100B803AB /* DiskInfoController.h */,
 				9626E5081124C63100B803AB /* DiskInfoController.m */,
+				AA0000000000000000000001 /* MainWindowController.h */,
+				AA0000000000000000000002 /* MainWindowController.m */,
 			);
 			name = Classes;
 			path = Source;
@@ -380,6 +385,7 @@
 				9626E46A112395DD00B803AB /* SheetController.m in Sources */,
 				9626E5091124C63100B803AB /* DiskInfoController.m in Sources */,
 				9626E83211314E7600B803AB /* AttachDiskImageController.m in Sources */,
+				AA0000000000000000000003 /* MainWindowController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

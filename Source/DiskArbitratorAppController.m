@@ -14,6 +14,7 @@
 #import "SheetController.h"
 #import "DiskInfoController.h"
 #import "AttachDiskImageController.h"
+#import "MainWindowController.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -100,15 +101,44 @@
 	[self refreshStatusItemIcon];  // arbitrator status initial state is taken from user defaults, which was initialized before KVO initialized
 
 	self.sortDescriptors = [NSArray arrayWithObject:[[NSSortDescriptor alloc] initWithKey:@"BSDNameNumber" ascending:YES]];
-	
+
+	MainWindowController *mainWindowController = [[MainWindowController alloc] initWithAppController:self arbitrator:arbitrator];
+	self.mainWindowController = mainWindowController;
+	self.window = mainWindowController.window;
+	self.tableView = mainWindowController.tableView;
+	self.disksArrayController = mainWindowController.disksArrayController;
+	window.delegate = self;
+	[mainWindowController refreshDisplays];
+
 	SetupToolbar(window, self);
 	window.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces;
-	window.worksWhenModal = YES;
-	
+
 	[tableView registerForDraggedTypes: @[NSPasteboardTypeFileURL] ];
 
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ShowMainWindowAtStartup"])
 		[window makeKeyAndOrderFront:self];
+
+	NSArray *args = [[NSProcessInfo processInfo] arguments];
+	NSUInteger screenshotIdx = [args indexOfObject:@"--screenshot"];
+	if (screenshotIdx != NSNotFound && screenshotIdx + 1 < args.count) {
+		NSString *outputPath = args[screenshotIdx + 1];
+		[self performActivation:nil];
+		[self performSetMountBlockMode:nil];
+		[window makeKeyAndOrderFront:self];
+		[mainWindowController refreshDisplays];
+
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+			NSWindow *win = self.window;
+			NSView *targetView = win.contentView.superview ?: win.contentView;
+			NSRect bounds = targetView.bounds;
+			NSBitmapImageRep *rep = [targetView bitmapImageRepForCachingDisplayInRect:bounds];
+			[targetView cacheDisplayInRect:bounds toBitmapImageRep:rep];
+			NSData *pngData = [rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+			[pngData writeToFile:outputPath atomically:YES];
+			NSLog(@"Screenshot saved: %@", outputPath);
+			[NSApp terminate:nil];
+		});
+	}
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification
@@ -491,21 +521,39 @@
 // A custom cell is used for the media description column.  Couldn't find a way to bind it to the disk
 // object, so implemented the dataSource delegate.
 
-- (id)tableView:(NSTableView *)tv objectValueForTableColumn:(NSTableColumn *)column row:(int)rowIndex
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
 {
-    Disk *disk;
-	
-    NSParameterAssert(rowIndex >= 0 && rowIndex < arbitrator.disks.count);
-    disk = [disksArrayController.arrangedObjects objectAtIndex:rowIndex];
+	return [[self.disksArrayController arrangedObjects] count];
+}
+
+- (id)tableView:(NSTableView *)tv objectValueForTableColumn:(NSTableColumn *)column row:(NSInteger)rowIndex
+{
+	NSArray *items = self.disksArrayController.arrangedObjects;
+	if (rowIndex < 0 || rowIndex >= items.count)
+		return nil;
+
+	Disk *disk = items[rowIndex];
 
 	if ([column.identifier isEqual:@"BSDName"])
 		return disk.BSDName;
 
-	//	fprintf(stdout, "getting value: %s\n", disk.BSDName.UTF8String);
+	if ([column.identifier isEqual:@"MountState"])
+		return disk.uiMountState;
+
+	if ([column.identifier isEqual:@"Filesystem"])
+		return disk.uiVolumeKind;
+
+	if ([column.identifier isEqual:@"Capacity"])
+		return disk.uiCapacity;
+
+	if ([column.identifier isEqual:@"Protocol"])
+		return disk.uiProtocol;
+
+	// "Device" column: return the Disk object for the custom DiskCell to render
 	return disk;
 }
 
-- (NSDragOperation)tableView:(NSTableView*)tv validateDrop:(id <NSDraggingInfo>)info proposedRow:(int)row proposedDropOperation:(NSTableViewDropOperation)op
+- (NSDragOperation)tableView:(NSTableView*)tv validateDrop:(id <NSDraggingInfo>)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)op
 {
     Log(LOG_DEBUG, @"%s op: %ld info: %@", __func__, op, info);
 
@@ -542,7 +590,7 @@
 }
 
 - (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id <NSDraggingInfo>)info
-			  row:(int)row dropOperation:(NSTableViewDropOperation)operation
+			  row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation
 {
 	Log(LOG_DEBUG, @"%s", __func__);
 

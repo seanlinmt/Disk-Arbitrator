@@ -95,12 +95,13 @@
 
 	Log(LOG_DEBUG, @"%s disk: %@", __func__, disk.BSDName);
 
-	[self addDisksObject:disk];
+	[[self mutableSetValueForKey:@"disks"] addObject:disk];
 }
 
 - (void)diskDidDisappear:(NSNotification *)notif
 {
-	[self removeDisksObject:notif.object];
+	if (notif.object)
+		[[self mutableSetValueForKey:@"disks"] removeObject:notif.object];
 }
 
 - (void)diskDidChange:(NSNotification *)notif
@@ -274,24 +275,38 @@
 
 - (void)addDisksObject:(Disk *)object
 {
-	[disks addObject:object];
+	if (object) {
+		[self willChangeValueForKey:@"disks" withSetMutation:NSKeyValueUnionSetMutation usingObjects:[NSSet setWithObject:object]];
+		[disks addObject:object];
+		[self didChangeValueForKey:@"disks" withSetMutation:NSKeyValueUnionSetMutation usingObjects:[NSSet setWithObject:object]];
+	}
 }
 
 - (void)addDisks:(NSSet *)objects
 {
-    [disks unionSet:objects];
+	if (objects.count > 0) {
+		[self willChangeValueForKey:@"disks" withSetMutation:NSKeyValueUnionSetMutation usingObjects:objects];
+		[disks unionSet:objects];
+		[self didChangeValueForKey:@"disks" withSetMutation:NSKeyValueUnionSetMutation usingObjects:objects];
+	}
 }
 
 - (void)removeDisksObject:(Disk *)anObject
 {
 	if (anObject) {
+		[self willChangeValueForKey:@"disks" withSetMutation:NSKeyValueMinusSetMutation usingObjects:[NSSet setWithObject:anObject]];
 		[disks removeObject:anObject];
+		[self didChangeValueForKey:@"disks" withSetMutation:NSKeyValueMinusSetMutation usingObjects:[NSSet setWithObject:anObject]];
 	}
 }
 
 - (void)removeDisks:(NSSet *)objects
 {
-    [disks minusSet:objects];
+	if (objects.count > 0) {
+		[self willChangeValueForKey:@"disks" withSetMutation:NSKeyValueMinusSetMutation usingObjects:objects];
+		[disks minusSet:objects];
+		[self didChangeValueForKey:@"disks" withSetMutation:NSKeyValueMinusSetMutation usingObjects:objects];
+	}
 }
 
 @end
@@ -300,7 +315,8 @@
 
 DADissenterRef __attribute__((cf_returns_retained)) DiskMountApprovalCallback(DADiskRef diskRef, void *arbitrator)
 {
-	Log(LOG_DEBUG, @"%s called: %p %s", __func__, diskRef, DADiskGetBSDName(diskRef));
+	const char *bsdName = DADiskGetBSDName(diskRef);
+	Log(LOG_DEBUG, @"%s called: %p %s", __func__, diskRef, bsdName ? bsdName : "(null)");
 	Log(LOG_DEBUG, @"\t claimed: %s", DADiskIsClaimed(diskRef) ? "Yes" : "No");
 
 	Disk *disk = [Disk uniqueDiskForDADisk:diskRef create:YES];

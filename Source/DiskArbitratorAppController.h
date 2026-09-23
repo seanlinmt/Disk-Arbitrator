@@ -10,10 +10,12 @@
 
 @class Arbitrator;
 @class Disk;
+@class MainWindowController;
 
-@interface AppController : NSObject <NSToolbarItemValidation> // <NSApplicationDelegate>
+@interface AppController : NSObject <NSToolbarItemValidation, NSTableViewDataSource, NSWindowDelegate> // <NSApplicationDelegate>
 
-@property (assign) IBOutlet NSPanel *window;
+@property (assign) IBOutlet NSWindow *window;
+@property (strong) MainWindowController *mainWindowController;
 @property (assign) IBOutlet NSMenu *statusMenu;
 @property (assign) IBOutlet NSTableView *tableView;
 @property (assign) IBOutlet NSArrayController *disksArrayController;

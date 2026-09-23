@@ -125,9 +125,15 @@
 
 - (void)setObjectValue:(id)value
 {
+	if (![value isKindOfClass:[Disk class]]) {
+		self.textCell = nil;
+		self.iconCell = nil;
+		return;
+	}
+
 	Disk *disk = (Disk *)value;
-	
-	if (disk) {
+
+	{
 //		Log(LOG_DEBUG, @"%s self: %p disk: %p", __func__, self, disk);
 
 		self.BSDName = disk.BSDName;
@@ -171,10 +177,6 @@
 		self.iconCell = [[[NSImageCell alloc] initImageCell:disk.icon] autorelease];
 		iconCell.imageScaling = NSImageScaleProportionallyDown;
 		iconCell.alignment = NSTextAlignmentLeft;
-	}
-	else {
-		self.textCell = nil;
-		self.iconCell = nil;
 	}
 }
 
